@@ -10,5 +10,12 @@ api/*
 dist/*
 build
 
+bin/*
+!bin/.gitkeep
+
 # vscode
 .vscode
+
+# data
+data
+internal/core/subconv/subconv.es5.js

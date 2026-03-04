@@ -1,15 +1,11 @@
 package update
 
 import (
-	"archive/zip"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/bestruirui/bestsub/internal/core/mihomo"
@@ -21,8 +17,7 @@ import (
 const (
 	bestsubUpdateUrl    = "https://github.com/bestruirui/bestsub/releases/latest/download"
 	bestsubUpdateApiUrl = "https://api.github.com/repos/bestruirui/BestSub/releases/latest"
-	frontUpdateApiUrl   = "https://api.github.com/repos/bestruirui/BestSubFront/releases/latest"
-	subcerUpdateApiUrl  = "https://api.github.com/repos/bestruirui/subconverter/releases/latest"
+	subcerUpdateApiUrl  = "https://api.github.com/repos/tindy2013/subconverter/releases/latest"
 )
 
 type LatestInfo struct {
@@ -30,10 +25,6 @@ type LatestInfo struct {
 	PublishedAt string `json:"published_at"`
 	Body        string `json:"body"`
 	Message     string `json:"message"`
-}
-
-func GetLatestUIInfo() (*LatestInfo, error) {
-	return getLatestInfo(frontUpdateApiUrl, op.GetSettingBool(setting.FRONTEND_URL_PROXY))
 }
 
 func GetLatestSubconverterInfo() (*LatestInfo, error) {
@@ -107,68 +98,4 @@ func download(url string, proxy bool) ([]byte, error) {
 		return nil, err
 	}
 	return bytes, nil
-}
-
-func unzip(data []byte, dest string) error {
-	r, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	if err != nil {
-		log.Debugf("new zip reader failed: %v", err)
-		return err
-	}
-
-	for _, f := range r.File {
-		fpath := filepath.Join(dest, f.Name)
-
-		if !inDest(fpath, dest) {
-			log.Debugf("invalid file path: %s", fpath)
-			return fmt.Errorf("invalid file path: %s", fpath)
-		}
-		info := f.FileInfo()
-		if info.IsDir() {
-			os.MkdirAll(fpath, os.ModePerm)
-			continue
-		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			continue
-		}
-		if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
-			log.Debugf("mkdir all failed: %v", err)
-			return err
-		}
-		outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode().Perm())
-		if err != nil {
-			err = os.Remove(fpath)
-			if err != nil {
-				log.Debugf("remove file failed: %v", err)
-				return err
-			}
-			outFile, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-			if err != nil {
-				log.Debugf("open file failed: %v", err)
-				return err
-			}
-		}
-		defer outFile.Close()
-		rc, err := f.Open()
-		if err != nil {
-			log.Debugf("open file failed: %v", err)
-			return err
-		}
-		_, err = io.Copy(outFile, rc)
-		rc.Close()
-		if err != nil {
-			log.Debugf("copy failed: %v", err)
-			return err
-		}
-	}
-	return nil
-}
-
-func inDest(fpath, dest string) bool {
-	if rel, err := filepath.Rel(dest, fpath); err == nil {
-		if filepath.IsLocal(rel) {
-			return true
-		}
-	}
-	return false
 }

@@ -3,12 +3,14 @@ package update
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/bestruirui/bestsub/internal/config"
 	"github.com/bestruirui/bestsub/internal/database/op"
 	"github.com/bestruirui/bestsub/internal/models/setting"
 	"github.com/bestruirui/bestsub/internal/modules/subcer"
+	"github.com/bestruirui/bestsub/internal/utils/archives"
 	"github.com/bestruirui/bestsub/internal/utils/log"
 )
 
@@ -58,9 +60,9 @@ func updateSubconverter() error {
 	case "windows":
 		switch arch {
 		case "386":
-			filename = "subconverter_win32.zip"
+			filename = "subconverter_win32.7z"
 		case "amd64":
-			filename = "subconverter_win64.zip"
+			filename = "subconverter_win64.7z"
 		default:
 			log.Errorf("unsupported windows architecture: %s", arch)
 			return fmt.Errorf("unsupported windows architecture: %s", arch)
@@ -68,9 +70,9 @@ func updateSubconverter() error {
 	case "darwin":
 		switch arch {
 		case "amd64":
-			filename = "subconverter_darwin64.zip"
+			filename = "subconverter_darwin64.tar.gz"
 		case "arm64":
-			filename = "subconverter_darwinarm.zip"
+			filename = "subconverter_darwinarm.tar.gz"
 		default:
 			log.Errorf("unsupported darwin architecture: %s", arch)
 			return fmt.Errorf("unsupported darwin architecture: %s", arch)
@@ -78,13 +80,13 @@ func updateSubconverter() error {
 	case "linux":
 		switch arch {
 		case "386":
-			filename = "subconverter_linux32.zip"
+			filename = "subconverter_linux32.tar.gz"
 		case "amd64":
-			filename = "subconverter_linux64.zip"
+			filename = "subconverter_linux64.tar.gz"
 		case "arm":
-			filename = "subconverter_armv7.zip"
+			filename = "subconverter_armv7.tar.gz"
 		case "arm64":
-			filename = "subconverter_aarch64.zip"
+			filename = "subconverter_aarch64.tar.gz"
 		default:
 			log.Errorf("unsupported linux architecture: %s", arch)
 			return fmt.Errorf("unsupported linux architecture: %s", arch)
@@ -108,9 +110,32 @@ func updateSubconverter() error {
 	subcer.Lock()
 	defer subcer.Unlock()
 	subcer.Stop()
-	if err := unzip(bytes, config.Base().SubConverter.Path); err != nil {
+	cachePath := filepath.Join(config.Base().SubConverter.Path, "tmp")
+	if err := archives.Extract(bytes, cachePath); err != nil {
 		return err
 	}
+
+	srcDir := filepath.Join(cachePath, "subconverter")
+	destDir := config.Base().SubConverter.Path
+	entries, err := os.ReadDir(srcDir)
+	if err != nil {
+		log.Debugf("read dir failed: %v", err)
+		return err
+	}
+	for _, entry := range entries {
+		srcPath := filepath.Join(srcDir, entry.Name())
+		destPath := filepath.Join(destDir, entry.Name())
+
+		err := os.Rename(srcPath, destPath)
+		if err != nil {
+			log.Debugf("move file failed: %v", err)
+			return err
+		}
+	}
+	if err := os.RemoveAll(cachePath); err != nil {
+		return err
+	}
+
 	subcer.Start()
 	return nil
 }

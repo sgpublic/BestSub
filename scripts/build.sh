@@ -232,6 +232,67 @@ prepare_environment() {
     log_success "Build environment ready"
 }
 
+# =============================================================================
+# Build Functions
+# =============================================================================
+
+build_frontend() {
+    log_step "Building frontend"
+
+    local web_dir="web"
+
+    # Check if web directory exists
+    if [ ! -d "$web_dir" ]; then
+        log_error "Web directory not found: $web_dir"
+        log_error "Please run this script from the project root directory"
+        return 1
+    fi
+
+    # Change to web directory
+    cd "$web_dir" || return 1
+
+    # Install dependencies
+    log_info "Installing frontend dependencies..."
+    if ! pnpm install; then
+        log_error "Failed to install frontend dependencies"
+        cd ..
+        return 1
+    fi
+    log_success "Frontend dependencies installed"
+
+    # Build the project
+    log_info "Building frontend project..."
+    if ! NEXT_PUBLIC_APP_VERSION="$GIT_VERSION" pnpm run build; then
+        log_error "Failed to build frontend project"
+        cd ..
+        return 1
+    fi
+    log_success "Frontend build completed"
+
+    # Return to original directory
+    cd ..
+
+    # Move out directory to static directory
+    log_info "Moving frontend output to static directory..."
+
+    # Remove old static/out if exists
+    if [ -d "static/out" ]; then
+        rm -rf "static/out"
+        log_info "Removed old static/out directory"
+    fi
+
+    # Move web/out to static/out
+    if [ -d "${web_dir}/out" ]; then
+        mv "${web_dir}/out" "static/"
+        log_success "Moved frontend output to static/out"
+    else
+        log_error "Frontend output directory not found: ${web_dir}/out"
+        return 1
+    fi
+
+    return 0
+}
+
 setup_android_ndk() {
     log_step "Setting up Android NDK"
 
@@ -610,6 +671,12 @@ main() {
             fi
         fi
 
+        # Build frontend
+        if ! build_frontend; then
+            log_error "Failed to build frontend"
+            exit 1
+        fi
+
         # Build for specified platform
         log_step "Building binary"
 
@@ -628,6 +695,13 @@ main() {
         log_step "Build completed"
         log_success "Binary ready: ${OUTPUT_DIR}/bin/${APP_NAME}-${os}-${arch}"
         ;;
+    "frontend")
+        # Build frontend
+        if ! build_frontend; then
+            log_error "Failed to build frontend"
+            exit 1
+        fi
+        ;;
     "release")
         log_step "Starting release build"
         echo "📦 Building ${APP_NAME} ${GIT_VERSION} (${COMMIT_ID})"
@@ -636,6 +710,12 @@ main() {
         # Setup
         if ! prepare_environment; then
             log_error "Failed to prepare build environment"
+            exit 1
+        fi
+
+        # Build frontend
+        if ! build_frontend; then
+            log_error "Failed to build frontend"
             exit 1
         fi
 
