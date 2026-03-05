@@ -84,24 +84,24 @@ func Do(ctx context.Context, subID uint16, config string) subModel.Result {
 			}
 			if subConfig.ProtocolFilterEnable {
 				if subConfig.ProtocolFilterMode {
-					if !slices.Contains(subConfig.ProtocolFilter, unique.Type) {
+					if slices.Contains(subConfig.ProtocolFilter, unique.Type) {
 						continue
 					}
 				} else {
-					if slices.Contains(subConfig.ProtocolFilter, unique.Type) {
+					if !slices.Contains(subConfig.ProtocolFilter, unique.Type) {
 						continue
 					}
 				}
 			} else {
 				if globalProtocolFilterEnable {
 					if globalProtocolFilterMode {
-						if !slices.Contains(globalProtocolFilter, unique.Type) {
-							log.Debugf("全局协议过滤启用,协议包含模式 丢弃协议: %v", unique.Type)
+						if slices.Contains(globalProtocolFilter, unique.Type) {
+							log.Debugf("全局协议过滤启用,协议排除模式 丢弃协议: %v", unique.Type)
 							continue
 						}
 					} else {
-						if slices.Contains(globalProtocolFilter, unique.Type) {
-							log.Debugf("全局协议过滤启用,协议排除模式 丢弃协议: %v", unique.Type)
+						if !slices.Contains(globalProtocolFilter, unique.Type) {
+							log.Debugf("全局协议过滤启用,协议包含模式 丢弃协议: %v", unique.Type)
 							continue
 						}
 					}
