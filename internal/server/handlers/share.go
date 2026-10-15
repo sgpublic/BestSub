@@ -227,6 +227,11 @@ func getShareSubContent(c *gin.Context) {
 		resp.Error(c, http.StatusInternalServerError, "share access count exceeded")
 		return
 	}
+	nodeData := share.GenNodeData(shareData.Gen)
+	if !share.HasNodeData(nodeData) {
+		c.String(http.StatusBadRequest, "share has no matching nodes")
+		return
+	}
 	op.UpdateShareAccessCount(c.Request.Context(), shareData.ID)
 	source, err := shareSourceURL(token)
 	if err != nil {
@@ -234,7 +239,7 @@ func getShareSubContent(c *gin.Context) {
 		c.String(http.StatusBadGateway, "invalid subconverter source URL")
 		return
 	}
-	content, err := share.GenSubData(c.Request.Context(), shareData.Gen, c.GetHeader("User-Agent"), source, c.Request.URL.RawQuery)
+	content, err := share.GenSubData(c.Request.Context(), shareData.Gen, c.GetHeader("User-Agent"), source, nodeData, c.Request.URL.RawQuery)
 	if err != nil {
 		log.Warnf("failed to generate share subscription: %v", err)
 		c.String(http.StatusBadGateway, "subconverter request failed")

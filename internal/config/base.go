@@ -27,7 +27,9 @@ func init() {
 	defaultConfigPath := filepath.Join(execDir, "config.json")
 
 	configPath := flag.String("c", defaultConfigPath, "config file path")
-	flag.Parse()
+	if !strings.HasSuffix(os.Args[0], ".test") {
+		flag.Parse()
+	}
 	if *configPath == "" {
 		*configPath = defaultConfigPath
 	}

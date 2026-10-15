@@ -1,11 +1,54 @@
 package share
 
 import (
+	"context"
+	"encoding/base64"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"testing"
 
 	"gopkg.in/yaml.v3"
 )
+
+func TestGetConvertedSubDataIncludesErrorResponse(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(http.StatusBadRequest)
+		_, _ = writer.Write([]byte("no nodes found"))
+	}))
+	defer server.Close()
+
+	_, err := getConvertedSubData(context.Background(), server.Client(), server.URL, url.Values{"target": {"clash"}}, "", "")
+	if err == nil {
+		t.Fatal("getConvertedSubData() error = nil, want HTTP error")
+	}
+	if got, want := err.Error(), "subconverter returned HTTP 400: no nodes found"; got != want {
+		t.Errorf("getConvertedSubData() error = %q, want %q", got, want)
+	}
+}
+
+func TestHasNodeData(t *testing.T) {
+	if HasNodeData([]byte("proxies:\n")) {
+		t.Fatal("HasNodeData() = true for an empty node document")
+	}
+	if !HasNodeData([]byte("proxies:\n - {name: node}\n")) {
+		t.Fatal("HasNodeData() = false for a document with a node")
+	}
+}
+
+func TestListConversionParamsUsesDataSource(t *testing.T) {
+	nodeData := []byte("proxies:\n - {name: node}\n")
+	params := listConversionParams(url.Values{"target": {"clash"}, "url": {"https://bestsub.example/node"}}, nodeData)
+
+	if got, want := params.Get("list"), "true"; got != want {
+		t.Errorf("list = %q, want %q", got, want)
+	}
+	wantURL := "data:text/yaml;base64," + base64.StdEncoding.EncodeToString(nodeData)
+	if got := params.Get("url"); got != wantURL {
+		t.Errorf("url = %q, want %q", got, wantURL)
+	}
+}
 
 func TestInlineClashProviders(t *testing.T) {
 	config := []byte(`

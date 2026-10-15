@@ -3,6 +3,7 @@ package share
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,7 +25,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func GenSubData(ctx context.Context, genConfigStr string, userAgent string, sourceURL string, extraQuery string) ([]byte, error) {
+const maxSubconverterErrorBodySize = 4 << 10
+
+func GenSubData(ctx context.Context, genConfigStr string, userAgent string, sourceURL string, nodeData []byte, extraQuery string) ([]byte, error) {
 	var genConfig share.GenConfig
 	if err := json.Unmarshal([]byte(genConfigStr), &genConfig); err != nil {
 		return nil, err
@@ -58,8 +61,7 @@ func GenSubData(ctx context.Context, genConfigStr string, userAgent string, sour
 		return body, nil
 	}
 
-	listParams := cloneValues(subUrlParam)
-	listParams.Set("list", "true")
+	listParams := listConversionParams(subUrlParam, nodeData)
 	listBody, err := getConvertedSubData(ctx, client.Client, baseURL, listParams, userAgent, withoutQueryKey(extraQuery, "list"))
 	if err != nil {
 		return nil, err
@@ -83,6 +85,13 @@ func getConvertedSubData(ctx context.Context, client *http.Client, baseURL strin
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
+		errorBody, err := io.ReadAll(io.LimitReader(response.Body, maxSubconverterErrorBodySize))
+		if err != nil {
+			return nil, fmt.Errorf("read subconverter error response: %w", err)
+		}
+		if message := strings.TrimSpace(string(errorBody)); message != "" {
+			return nil, fmt.Errorf("subconverter returned HTTP %d: %s", response.StatusCode, message)
+		}
 		return nil, fmt.Errorf("subconverter returned HTTP %d", response.StatusCode)
 	}
 	body, err := io.ReadAll(response.Body)
@@ -103,6 +112,17 @@ func cloneValues(values url.Values) url.Values {
 		clone[key] = append([]string(nil), value...)
 	}
 	return clone
+}
+
+func listConversionParams(params url.Values, nodeData []byte) url.Values {
+	listParams := cloneValues(params)
+	listParams.Set("list", "true")
+	listParams.Set("url", dataSourceURL(nodeData))
+	return listParams
+}
+
+func dataSourceURL(data []byte) string {
+	return "data:text/yaml;base64," + base64.StdEncoding.EncodeToString(data)
 }
 
 func withoutQueryKey(rawQuery, key string) string {
@@ -265,6 +285,10 @@ func GenNodeData(config string) []byte {
 		result.Write(newLine)
 	}
 	return result.Bytes()
+}
+
+func HasNodeData(data []byte) bool {
+	return len(data) > len(nodeData)
 }
 
 func rename(raw []byte, newName []byte) []byte {
