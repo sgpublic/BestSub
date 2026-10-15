@@ -19,10 +19,6 @@ export const API_PATH = {
     info: '/api/v1/system/info',
     version: '/api/v1/system/version',
   },
-  update: {
-    base: '/api/v1/update',
-    latest: '/api/v1/update',
-  },
 }
 
 export const APP_CONFIG = {

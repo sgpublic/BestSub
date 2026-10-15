@@ -4,8 +4,7 @@ import {
   LOG_RETENTION_DAYS,
   PROXY_ENABLE,
   PROXY_URL,
-  SUBCONVERTER_URL,
-  SUBCONVERTER_URL_PROXY,
+  SUBCONVERTER_SERVICE_URL,
   SUB_DISABLE_AUTO,
 } from "@/src/constant/settings-keys"
 import { BooleanSettingField } from "./fields/BooleanSettingField"
@@ -58,26 +57,15 @@ export function SystemSettingsSection({ control }: { control: Control<FormValues
       />
 
       <Controller
-        name={SUBCONVERTER_URL}
+        name={SUBCONVERTER_SERVICE_URL}
         control={control}
         render={({ field }) => (
           <TextSettingField
-            title="subconverter地址"
+            title="外部 Subconverter 服务地址"
+            description="由用户自行运行的转换服务，填写 HTTP(S) 基础地址"
             value={String(field.value ?? "")}
             onChange={field.onChange}
-          />
-        )}
-      />
-
-      <Controller
-        name={SUBCONVERTER_URL_PROXY}
-        control={control}
-        render={({ field }) => (
-          <BooleanSettingField
-            title="subconverter代理"
-            description="是否启用代理更新subconverter"
-            checked={Boolean(field.value)}
-            onCheckedChange={field.onChange}
+            placeholder="http://subconverter:25500"
           />
         )}
       />

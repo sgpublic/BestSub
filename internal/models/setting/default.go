@@ -16,12 +16,8 @@ func DefaultSetting() []Setting {
 			Value: "7",
 		},
 		{
-			Key:   SUBCONVERTER_URL,
-			Value: "https://github.com/tindy2013/subconverter/releases/latest/download/",
-		},
-		{
-			Key:   SUBCONVERTER_URL_PROXY,
-			Value: "false",
+			Key:   SUBCONVERTER_SERVICE_URL,
+			Value: "",
 		},
 		{
 			Key:   SUB_DISABLE_AUTO,

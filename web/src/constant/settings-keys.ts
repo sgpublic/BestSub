@@ -3,8 +3,7 @@ export const PROXY_URL = "proxy_url"
 
 export const LOG_RETENTION_DAYS = "log_retention_days"
 
-export const SUBCONVERTER_URL = "subconverter_url"
-export const SUBCONVERTER_URL_PROXY = "subconverter_url_proxy"
+export const SUBCONVERTER_SERVICE_URL = "subconverter_service_url"
 
 export const SUB_DISABLE_AUTO = "sub_disable_auto"
 
@@ -25,7 +24,6 @@ export const NOTIFY_ID = "notify_id"
 
 export const BOOLEAN_SETTING_KEYS = new Set<string>([
   PROXY_ENABLE,
-  SUBCONVERTER_URL_PROXY,
   NODE_PROTOCOL_FILTER_ENABLE,
   NODE_PROTOCOL_FILTER_MODE,
 ])

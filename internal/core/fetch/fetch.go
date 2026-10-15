@@ -12,13 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bestruirui/bestsub/internal/config"
 	"github.com/bestruirui/bestsub/internal/core/mihomo"
 	"github.com/bestruirui/bestsub/internal/core/node"
 	"github.com/bestruirui/bestsub/internal/database/op"
 	nodeModel "github.com/bestruirui/bestsub/internal/models/node"
 	"github.com/bestruirui/bestsub/internal/models/setting"
 	subModel "github.com/bestruirui/bestsub/internal/models/sub"
+	"github.com/bestruirui/bestsub/internal/modules/subcer"
 	"github.com/bestruirui/bestsub/internal/utils/log"
 	"gopkg.in/yaml.v3"
 )
@@ -41,7 +41,10 @@ func Do(ctx context.Context, subID uint16, config string) subModel.Result {
 		return createFailureResult("proxy config error", startTime)
 	}
 	defer client.Release()
-	subUrl := genSubConverterUrl(subConfig.Url, subConfig.Proxy)
+	subUrl, err := genSubConverterUrl(subConfig.Url, subConfig.Proxy)
+	if err != nil {
+		return createFailureResult(err.Error(), startTime)
+	}
 	for retry < 3 {
 		time.Sleep(time.Duration(retry) * time.Second)
 		retry++
@@ -59,6 +62,10 @@ func Do(ctx context.Context, subID uint16, config string) subModel.Result {
 			continue
 		}
 		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			log.Warnf("fetch task %d failed: subconverter returned HTTP %d", subID, resp.StatusCode)
+			return createFailureResult(fmt.Sprintf("subconverter returned HTTP %d", resp.StatusCode), startTime)
+		}
 
 		content, err := io.ReadAll(resp.Body)
 		if err != nil {
@@ -150,15 +157,16 @@ func createSuccessResult(count uint32, startTime time.Time, nodeNull bool) subMo
 		Duration:      uint16(time.Since(startTime).Milliseconds()),
 	}
 }
-func genSubConverterUrl(subUrl string, enableProxy bool) string {
+func genSubConverterUrl(subUrl string, enableProxy bool) (string, error) {
 	subUrl = url.QueryEscape(subUrl)
-	cfg := config.Base()
-	scHost := cfg.SubConverter.Host
-	scPort := cfg.SubConverter.Port
+	baseURL, err := subcer.GetBaseUrl()
+	if err != nil {
+		return "", err
+	}
 	if enableProxy {
 		proxy := op.GetSettingStr(setting.PROXY_URL)
 		proxy = url.QueryEscape(proxy)
-		return fmt.Sprintf("http://%s:%d/sub?target=clash&list=true&url=%s&sub_proxy=%s", scHost, scPort, subUrl, proxy)
+		return fmt.Sprintf("%s/sub?target=clash&list=true&url=%s&sub_proxy=%s", baseURL, subUrl, proxy), nil
 	}
-	return fmt.Sprintf("http://%s:%d/sub?target=clash&list=true&url=%s", scHost, scPort, subUrl)
+	return fmt.Sprintf("%s/sub?target=clash&list=true&url=%s", baseURL, subUrl), nil
 }

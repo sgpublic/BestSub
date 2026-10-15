@@ -2,23 +2,6 @@
  * 更新相关类型定义
  */
 
-export interface LatestInfo {
-  /** 版本标签 */
-  tag_name: string
-  /** 发布时间 */
-  published_at: string
-  /** 更新内容 */
-  body: string
-}
-
-export interface UpdateResponse {
-  bestsub: LatestInfo
-  webui: LatestInfo
-  subconverter: LatestInfo
-}
-
-export type UpdateComponent = 'subconverter' | 'webui'
-
 export interface SystemVersion {
   /** 版本号 */
   version: string

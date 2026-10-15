@@ -224,5 +224,12 @@ func getShareSubContent(c *gin.Context) {
 		return
 	}
 	op.UpdateShareAccessCount(c.Request.Context(), shareData.ID)
-	c.Data(http.StatusOK, "text/plain; charset=utf-8", share.GenSubData(shareData.Gen, c.GetHeader("User-Agent"), token, c.Request.URL.RawQuery))
+	nodeData := share.GenNodeData(shareData.Gen)
+	content, err := share.GenSubData(c.Request.Context(), shareData.Gen, c.GetHeader("User-Agent"), nodeData, c.Request.URL.RawQuery)
+	if err != nil {
+		log.Warnf("failed to generate share subscription: %v", err)
+		c.String(http.StatusBadGateway, "subconverter request failed")
+		return
+	}
+	c.Data(http.StatusOK, "text/plain; charset=utf-8", content)
 }

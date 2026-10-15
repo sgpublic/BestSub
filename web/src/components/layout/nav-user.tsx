@@ -5,7 +5,6 @@ import {
   IconDotsVertical,
   IconLogout,
   IconSettings,
-  IconRefresh,
   IconUserCircle,
 } from "@tabler/icons-react"
 
@@ -31,14 +30,12 @@ import {
 import { useAuth } from "@/src/components/providers"
 import { SettingsDialog } from "@/src/components/features"
 import { ProfileDialog } from "@/src/components/features/profile"
-import { SystemUpdateDialog } from "@/src/components/features/system-update"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
   const { user, logout } = useAuth()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const [isUpdateOpen, setIsUpdateOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   if (!user) return null
@@ -54,13 +51,6 @@ export function NavUser() {
     setIsDropdownOpen(false)
     setTimeout(() => {
       setIsProfileOpen(true)
-    }, 100)
-  }
-
-  const handleOpenUpdate = () => {
-    setIsDropdownOpen(false)
-    setTimeout(() => {
-      setIsUpdateOpen(true)
     }, 100)
   }
 
@@ -118,10 +108,6 @@ export function NavUser() {
                 <IconSettings />
                 系统设置
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleOpenUpdate}>
-                <IconRefresh />
-                系统更新
-              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
@@ -133,7 +119,6 @@ export function NavUser() {
       </SidebarMenuItem>
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
       <ProfileDialog open={isProfileOpen} onOpenChange={setIsProfileOpen} />
-      <SystemUpdateDialog open={isUpdateOpen} onOpenChange={setIsUpdateOpen} />
     </SidebarMenu>
   )
 }

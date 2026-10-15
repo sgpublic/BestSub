@@ -1,12 +1,11 @@
 package config
 
 type Base struct {
-	Server       ServerConfig       `json:"server"`
-	Database     DatabaseConfig     `json:"database"`
-	Log          LogConfig          `json:"log"`
-	JWT          JWTConfig          `json:"jwt"`
-	Session      SessionConfig      `json:"-"`
-	SubConverter SubConverterConfig `json:"subconverter"`
+	Server   ServerConfig   `json:"server"`
+	Database DatabaseConfig `json:"database"`
+	Log      LogConfig      `json:"log"`
+	JWT      JWTConfig      `json:"jwt"`
+	Session  SessionConfig  `json:"-"`
 }
 
 type ServerConfig struct {
@@ -32,10 +31,4 @@ type JWTConfig struct {
 
 type SessionConfig struct {
 	NodePath string `json:"-"`
-}
-
-type SubConverterConfig struct {
-	Path string `json:"-"`
-	Port int    `json:"port"`
-	Host string `json:"host"`
 }
