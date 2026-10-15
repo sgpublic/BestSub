@@ -12,6 +12,7 @@ const (
 	LOG_RETENTION_DAYS = "log_retention_days"
 
 	SUBCONVERTER_SERVICE_URL = "subconverter_service_url"
+	SUBCONVERTER_SOURCE_URL  = "subconverter_source_url"
 
 	SUB_DISABLE_AUTO = "sub_disable_auto"
 

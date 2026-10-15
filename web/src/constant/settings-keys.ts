@@ -4,6 +4,7 @@ export const PROXY_URL = "proxy_url"
 export const LOG_RETENTION_DAYS = "log_retention_days"
 
 export const SUBCONVERTER_SERVICE_URL = "subconverter_service_url"
+export const SUBCONVERTER_SOURCE_URL = "subconverter_source_url"
 
 export const SUB_DISABLE_AUTO = "sub_disable_auto"
 

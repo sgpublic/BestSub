@@ -20,6 +20,10 @@ func DefaultSetting() []Setting {
 			Value: "",
 		},
 		{
+			Key:   SUBCONVERTER_SOURCE_URL,
+			Value: "http://127.0.0.1:8080",
+		},
+		{
 			Key:   SUB_DISABLE_AUTO,
 			Value: "0",
 		},

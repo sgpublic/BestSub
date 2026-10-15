@@ -5,6 +5,7 @@ import {
   PROXY_ENABLE,
   PROXY_URL,
   SUBCONVERTER_SERVICE_URL,
+  SUBCONVERTER_SOURCE_URL,
   SUB_DISABLE_AUTO,
 } from "@/src/constant/settings-keys"
 import { BooleanSettingField } from "./fields/BooleanSettingField"
@@ -66,6 +67,20 @@ export function SystemSettingsSection({ control }: { control: Control<FormValues
             value={String(field.value ?? "")}
             onChange={field.onChange}
             placeholder="http://subconverter:25500"
+          />
+        )}
+      />
+
+      <Controller
+        name={SUBCONVERTER_SOURCE_URL}
+        control={control}
+        render={({ field }) => (
+          <TextSettingField
+            title="Subconverter 节点源地址"
+            description="供 Subconverter 获取分享节点的 BestSub 基础地址，需从 Subconverter 所在网络可访问"
+            value={String(field.value ?? "")}
+            onChange={field.onChange}
+            placeholder="http://127.0.0.1:8080"
           />
         )}
       />

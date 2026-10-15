@@ -3,7 +3,6 @@ package share
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,13 +24,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func GenSubData(ctx context.Context, genConfigStr string, userAgent string, sourceData []byte, extraQuery string) ([]byte, error) {
+func GenSubData(ctx context.Context, genConfigStr string, userAgent string, sourceURL string, extraQuery string) ([]byte, error) {
 	var genConfig share.GenConfig
 	if err := json.Unmarshal([]byte(genConfigStr), &genConfig); err != nil {
 		return nil, err
-	}
-	if len(sourceData) <= len(nodeData) {
-		return nil, fmt.Errorf("no nodes available for this share")
 	}
 	subUrlParam, err := query.Values(genConfig.SubConverter)
 	if err != nil {
@@ -40,7 +36,7 @@ func GenSubData(ctx context.Context, genConfigStr string, userAgent string, sour
 	if genConfig.Proxy {
 		subUrlParam.Add("config_proxy", op.GetSettingStr(setting.PROXY_URL))
 	}
-	subUrlParam.Add("url", dataSourceURL(sourceData))
+	subUrlParam.Add("url", sourceURL)
 	subUrlParam.Add("remove_emoji", "false")
 	baseURL, err := subcer.GetBaseUrl()
 	if err != nil {
@@ -69,10 +65,6 @@ func GenSubData(ctx context.Context, genConfigStr string, userAgent string, sour
 		return nil, err
 	}
 	return inlineClashProviders(body, listBody)
-}
-
-func dataSourceURL(data []byte) string {
-	return "data:text/yaml;base64," + base64.StdEncoding.EncodeToString(data)
 }
 
 func getConvertedSubData(ctx context.Context, client *http.Client, baseURL string, params url.Values, userAgent string, extraQuery string) ([]byte, error) {

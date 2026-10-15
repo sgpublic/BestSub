@@ -1,7 +1,6 @@
 package share
 
 import (
-	"encoding/base64"
 	"reflect"
 	"testing"
 
@@ -88,14 +87,6 @@ func TestInlineClashProvidersWithoutProviderReturnsOriginal(t *testing.T) {
 func TestWithoutQueryKey(t *testing.T) {
 	if got := withoutQueryKey("list=false&rename=Custom%20Name", "list"); got != "rename=Custom+Name" {
 		t.Fatalf("withoutQueryKey() = %q, want rename query only", got)
-	}
-}
-
-func TestDataSourceURL(t *testing.T) {
-	data := []byte("proxies:\n")
-	want := "data:text/yaml;base64," + base64.StdEncoding.EncodeToString(data)
-	if got := dataSourceURL(data); got != want {
-		t.Fatalf("dataSourceURL() = %q, want %q", got, want)
 	}
 }
 

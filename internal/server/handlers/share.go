@@ -1,11 +1,15 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bestruirui/bestsub/internal/database/op"
+	"github.com/bestruirui/bestsub/internal/models/setting"
 	shareModel "github.com/bestruirui/bestsub/internal/models/share"
 	"github.com/bestruirui/bestsub/internal/modules/share"
 	"github.com/bestruirui/bestsub/internal/server/middleware"
@@ -224,12 +228,26 @@ func getShareSubContent(c *gin.Context) {
 		return
 	}
 	op.UpdateShareAccessCount(c.Request.Context(), shareData.ID)
-	nodeData := share.GenNodeData(shareData.Gen)
-	content, err := share.GenSubData(c.Request.Context(), shareData.Gen, c.GetHeader("User-Agent"), nodeData, c.Request.URL.RawQuery)
+	source, err := shareSourceURL(token)
+	if err != nil {
+		log.Warnf("failed to create share source URL: %v", err)
+		c.String(http.StatusBadGateway, "invalid subconverter source URL")
+		return
+	}
+	content, err := share.GenSubData(c.Request.Context(), shareData.Gen, c.GetHeader("User-Agent"), source, c.Request.URL.RawQuery)
 	if err != nil {
 		log.Warnf("failed to generate share subscription: %v", err)
 		c.String(http.StatusBadGateway, "subconverter request failed")
 		return
 	}
 	c.Data(http.StatusOK, "text/plain; charset=utf-8", content)
+}
+
+func shareSourceURL(token string) (string, error) {
+	baseURL := strings.TrimRight(strings.TrimSpace(op.GetSettingStr(setting.SUBCONVERTER_SOURCE_URL)), "/")
+	parsed, err := url.Parse(baseURL)
+	if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return "", fmt.Errorf("configure an http(s) base URL in subconverter_source_url")
+	}
+	return baseURL + "/api/v1/share/node/" + token, nil
 }
